@@ -3,19 +3,20 @@ import { renderWithProviders, trpcMsw } from "./setup";
 import { describe, expect, beforeAll, afterAll, it } from "vitest";
 
 function Greeting() {
-  const greeting = api.example.hello.useQuery({ text: "world" });
+  const greeting = api.example.hello.useMutation();
+  useEffect(() => {
+    greeting.mutate({ text: "world" });
+  }, []);
   return <h1>{greeting.data?.greeting ?? "no data"}</h1>;
 }
 
 import { setupServer } from "msw/node";
 import { screen, waitFor } from "@testing-library/react";
+import { useEffect } from "react";
 
 const server = setupServer(
-  trpcMsw.example.hello.query((req, res, ctx) => {
-    // TODO:
-    // either have `getInput` return `json` because it knows our transformer (preferred)
-    // or at least type `getInput` correctly (might require a PR to msw-trpc)
-    const request = req.getInput().json;
+  trpcMsw.example.hello.mutation(async (req, res, ctx) => {
+    const request = await req.getInput();
     return res(
       ctx.status(200),
       // TODO: fix type issues here
